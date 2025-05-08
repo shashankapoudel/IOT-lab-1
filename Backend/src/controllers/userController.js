@@ -15,9 +15,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(400, 'User with this email already exists')
     }
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const user = await User.create({ name, email, password: hashedPassword })
+    const user = await User.create({ name, email })
     const token = generateToken(user._id)
     const newUser = await user.toObject();
     newUser.token = token;
@@ -27,22 +25,20 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email } = req.body;
     if (!email) {
-        throw new ApiError(400, 'Password and email is required')
+        throw new ApiError(400, ' email is required')
     }
     const user = await User.findOne({ email })
     if (!user) {
         throw new ApiError(404, 'User with this email doesnot exist')
     }
-
     const token = generateToken(user._id);
-    const loggedInUser = await User.findById(user._id).select("-password")
     const options = {
         httpOnly: true,
         secure: true
     }
     return res.status(200).cookie(options).json(
         new ApiResponse(200, {
-            user: loggedInUser, token
+            user, token
         }, "User logged In Successfully")
     )
 })
